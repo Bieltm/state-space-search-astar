@@ -1,0 +1,15 @@
+[CONFIG]
+page_tuples 100
+read_cost 1
+write_cost 1
+
+[RELATIONS]
+A 2000 20
+B 2000 20
+C 2000 20
+D 2000 20
+
+[PREDICATES]
+A B 0.001
+B C 0.0005
+C D 0.001

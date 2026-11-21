@@ -1,0 +1,11 @@
+name;description;ammount;participants
+Alice;Airbnb;240;Alice,Bob,Charlie,David
+Bob;Dinner;100;Alice,Bob,Charlie,David
+Charlie;Groceries;60;Alice,Bob,Charlie,David
+David;Car rental;160;Alice,Bob,Charlie,David
+Eve;Museum tickets;75;Alice,Bob,Charlie,David,Eve
+Alice;Fuel;50;Alice,Bob,Charlie,David
+Charlie;Lunch;45;Alice,Bob,Charlie,David,Eve
+Eve;Taxi;30;Bob,Charlie,David,Eve
+Bob;Drinks;40;Alice,Bob,Charlie,David,Eve
+David;Parking;20;Alice,Charlie,David
