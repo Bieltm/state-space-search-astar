@@ -202,15 +202,16 @@ class PacmanProblem(Problem):
     def cost(self, s, a):
         return 1
 
-
 @PacmanProblem.heuristic
 class ManhattanHeuristic(Heuristic):
     def compute(self, state):
-        raise NotImplementedError
-
+        x1, y1 = state
+        x2, y2 = self.problem.goal
+        return abs(x1 - x2) + abs(y1 - y2)
 
 @PacmanProblem.heuristic
 class EuclideanHeuristic(Heuristic):
     def compute(self, state):
-        raise NotImplementedError
-
+        x1, y1 = state
+        x2, y2 = self.problem.goal
+        return math.hypot(x1 - x2, y1 - y2)

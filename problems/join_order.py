@@ -99,29 +99,53 @@ class JoinOrderProblem(Problem):
 
         @cache
         def estimate_card(joined):
-            """
-            Using information about the query, computes the estimated cardinality
-            for the currently joined relations.
+            if not joined:
+                return 0
 
-            Uses a cache to avoid recomputing the cardinality for the same joined relatiosn
-            each time.
-            """
-            raise NotImplementedError("TODO")
-        
+            mult = 1
+            for name in joined:
+                mult = mult * query.relations[name].cardinality
+
+            for (r1, r2), selectivity in query.predicates.items():
+                if r1 in joined and r2 in joined:
+                    mult = mult * selectivity
+
+            return mult
         self.estimate_card = estimate_card
         self.query = query
 
     def initials(self):
-        raise NotImplementedError("TODO")
+        states = []
+        relations_list = sorted(self.query.relations)
+        for i in relations_list:
+            a = frozenset([i])
+            states.append(a)
+        return states
 
     def is_goal(self, s):
-        raise NotImplementedError("TODO")
+        total = set(self.query.relations)
+        rest = total - s
+        return not rest
 
     def actions(self, s):
-        raise NotImplementedError("TODO")
+        total = frozenset(self.query.relations)
+        rest = sorted(total - s)
+        return rest
 
     def result(self, s, a):
-        raise NotImplementedError("TODO")
+        return s | frozenset([a])
 
     def cost(self, s, a):
-        raise NotImplementedError("TODO")
+        if not s:
+            return 0
+        #cost(S,r) = pagines(S)*read_cost+pagines(SU{r})*write_cost
+        next_s = self.result(s, a)
+        if len(s) == 1:
+            rel_name = next(iter(s))
+            pages_read = self.query.relations[rel_name].pages
+        else:
+            pages_read = math.ceil(self.estimate_card(s) / self.query.page_tuples)
+
+        pages_write = math.ceil(self.estimate_card(next_s) / self.query.page_tuples)
+
+        return pages_read * self.query.read_cost + pages_write * self.query.write_cost
