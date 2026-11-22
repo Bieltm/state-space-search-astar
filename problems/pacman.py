@@ -205,13 +205,17 @@ class PacmanProblem(Problem):
 @PacmanProblem.heuristic
 class ManhattanHeuristic(Heuristic):
     def compute(self, state):
-        x1, y1 = state
-        x2, y2 = self.problem.goal
-        return abs(x1 - x2) + abs(y1 - y2)
+        (r, c), food = state
+        if (food is None):
+            return 0
+        fr, fc = food
+        return abs(r - fr) + abs(c - fc)
 
 @PacmanProblem.heuristic
 class EuclideanHeuristic(Heuristic):
     def compute(self, state):
-        x1, y1 = state
-        x2, y2 = self.problem.goal
-        return math.hypot(x1 - x2, y1 - y2)
+        (r, c), food = state
+        if (food is None):
+            return 0
+        fr, fc = food
+        return math.hypot(r - fr,c - fc)

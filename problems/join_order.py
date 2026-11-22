@@ -94,6 +94,7 @@ class JoinOrderProblem(Problem):
     ]
 
     def __init__(self, file_: str):
+        super().__init__()
         file_ = Path(file_)
         query = JoinInput.parse(file_.read_text())
 
@@ -102,13 +103,13 @@ class JoinOrderProblem(Problem):
             if not joined:
                 return 0
 
-            mult = 1
-            for name in joined:
+            mult = Fraction(1)
+            for name in sorted(joined):
                 mult = mult * query.relations[name].cardinality
 
             for (r1, r2), selectivity in query.predicates.items():
                 if r1 in joined and r2 in joined:
-                    mult = mult * selectivity
+                    mult = mult * Fraction(str(selectivity))
 
             return mult
         self.estimate_card = estimate_card
