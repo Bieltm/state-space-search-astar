@@ -1,123 +1,86 @@
-import heapq
-from hlogedu.search.algorithm import Algorithm, Solution
-from hlogedu.search.node import Node
+from hlogedu.search.algorithm import Algorithm, Node, Solution
+from hlogedu.search.containers import PriorityQueue
 
 
 class TreeAStar(Algorithm):
     NAME = "tree-astar"
 
-    def run(self):
-        frontier = []
-        expanded_count = 0
-        counter = 0
+    def run(self, heuristic=None):
+        if heuristic is None:
+            heuristic = lambda state: 0  # sin heurística: equivale a UCS
+        self.fringe = PriorityQueue(key=lambda n: n.state)  # desempate por estado, como el framework
+        roots = []
         for state in self.problem.initials():
-            h = self.heuristic(state)
-            f = 0 + h
+            h = heuristic(state)
+            node = Node(state, h_cost=h, f_cost=h)
+            node.location = Node.Location.FRINGE
+            roots.append(node)
+            self.fringe.push(node, node.f_cost)
 
-            node = Node(state=state, parent=None, action=None, cost=0)
-            node.location = Node.Location.FRONTIER
-            heapq.heappush(frontier, (f, counter, node))
-            counter += 1
-        while frontier:     
-            f, _, current = heapq.heappop(frontier)
-            current.location = Node.Location.EXPANDED
+        expanded = 0
+        while not self.fringe.is_empty():
+            node = self.fringe.pop()
 
-            if self.problem.is_goal(current.state):
-                return Solution(
-                    problem=self.problem,
-                    algorithm=self,
-                    node=current,
-                    expanded=expanded_count,
-                )
+            if self.problem.is_goal(node.state):
+                node.location = Node.Location.PRE_EXPANDED
+                return Solution(self.problem, roots, node)
 
-            expanded_count += 1
-            current.expanded_order = expanded_count
+            node.location = Node.Location.EXPANDED
+            expanded += 1
+            node.expanded_order = expanded
 
-            for action in sorted(self.problem.actions(current.state)):
-                next_state = self.problem.result(current.state, action)
-                step_cost = self.problem.cost(current.state, action)
-                g = current.cost + step_cost
-                h = self.heuristic(next_state)
+            for action in sorted(self.problem.actions(node.state)):
+                next_state = self.problem.result(node.state, action)
+                g = node.cost + self.problem.cost(node.state, action)
+                h = heuristic(next_state)
+                child = Node(next_state, action, g, node, h_cost=h, f_cost=g + h)
+                node.add_successor(child)
+                child.location = Node.Location.FRINGE
+                self.fringe.push(child, child.f_cost)
 
-                child = Node(
-                    state=next_state,
-                    parent=current,
-                    action=action,
-                    cost=g,
-                )
-                child.location = Node.Location.FRONTIER
-                heapq.heappush(frontier, (g + h, counter, child))
-                counter += 1
-
-        return Solution(
-            problem=self.problem,
-            algorithm=self,
-            node=None,
-            expanded=expanded_count,
-        )
-
+        return Solution(self.problem, roots, None)
 
 
 class GraphAStar(Algorithm):
     NAME = "graph-astar"
 
-    def run(self):
-        frontier = []
-        expanded_count = 0
-        counter = 0
-        explored = set()
-
+    def run(self, heuristic=None):
+        if heuristic is None:
+            heuristic = lambda state: 0  # sin heurística: equivale a UCS
+        self.fringe = PriorityQueue(key=lambda n: n.state)  # desempate por estado, como el framework
+        roots = []
         for state in self.problem.initials():
-            h = self.heuristic(state)
-            f = 0 + h
+            h = heuristic(state)
+            node = Node(state, h_cost=h, f_cost=h)
+            node.location = Node.Location.FRINGE
+            roots.append(node)
+            self.fringe.push(node, node.f_cost)
 
-            node = Node(state=state, parent=None, action=None, cost=0)
-            node.location = Node.Location.FRONTIER
-            heapq.heappush(frontier, (f, counter, node))
-            counter += 1
-
-        while frontier:
-            f, _, current = heapq.heappop(frontier)
-
-            if current.state in explored:
+        closed = set()
+        expanded = 0
+        while not self.fringe.is_empty():
+            node = self.fringe.pop()
+            if node.state in closed:
                 continue
 
-            explored.add(current.state)
-            current.location = Node.Location.EXPANDED
+            if self.problem.is_goal(node.state):
+                node.location = Node.Location.PRE_EXPANDED
+                return Solution(self.problem, roots, node)
 
-            if self.problem.is_goal(current.state):
-                return Solution(
-                    problem=self.problem,
-                    algorithm=self,
-                    node=current,
-                    expanded=expanded_count,
-                )
+            closed.add(node.state)
+            node.location = Node.Location.EXPANDED
+            expanded += 1
+            node.expanded_order = expanded
 
-            expanded_count += 1
-            current.expanded_order = expanded_count
-
-            for action in sorted(self.problem.actions(current.state)):
-                next_state = self.problem.result(current.state, action)
-                if next_state in explored:
+            for action in sorted(self.problem.actions(node.state)):
+                next_state = self.problem.result(node.state, action)
+                if next_state in closed:
                     continue
+                g = node.cost + self.problem.cost(node.state, action)
+                h = heuristic(next_state)
+                child = Node(next_state, action, g, node, h_cost=h, f_cost=g + h)
+                node.add_successor(child)
+                child.location = Node.Location.FRINGE
+                self.fringe.push(child, child.f_cost)
 
-                step_cost = self.problem.cost(current.state, action)
-                g = current.cost + step_cost
-                h = self.heuristic(next_state)
-
-                child = Node(
-                    state=next_state,
-                    parent=current,
-                    action=action,
-                    cost=g,
-                )
-                child.location = Node.Location.FRONTIER
-                heapq.heappush(frontier, (g + h, counter, child))
-                counter += 1
-
-        return Solution(
-            problem=self.problem,
-            algorithm=self,
-            node=None,
-            expanded=expanded_count,
-        )
+        return Solution(self.problem, roots, None)
